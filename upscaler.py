@@ -1,4 +1,4 @@
-"""
+﻿"""
 AMD AI Upscaler - Inference Engine
 Uses cloned ONNX models for real-time 2x upscaling
 """
@@ -22,7 +22,7 @@ class AMDUpscaler:
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
         
-        print(f"✓ Model loaded successfully")
+        print(f"[OK] Model loaded successfully")
         print(f"  Provider: {self.session.get_providers()[0]}")
         print(f"  Input: {self.input_name}")
         print(f"  Output: {self.output_name}")
@@ -32,11 +32,10 @@ class AMDUpscaler:
         
         # Load and preprocess image
         img = Image.open(image_path).convert('RGB')
-        img_array = np.array(img).astype(np.float32) / 255.0
+        img_array = np.array(img).astype(np.float16) / 255.0
         
-        # ONNX expects NCHW format (batch, channels, height, width)
-        # PIL gives us HWC (height, width, channels)
-        img_array = np.transpose(img_array, (2, 0, 1))  # HWC -> CHW
+        # Model expects NHWC format (batch, height, width, channels)
+        # PIL gives us HWC, so just add batch dimension
         img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
         
         # Run inference
@@ -45,14 +44,13 @@ class AMDUpscaler:
         inference_time = time.time() - start_time
         
         # Post-process output
-        output = outputs[0][0]  # Remove batch dimension
-        output = np.transpose(output, (1, 2, 0))  # CHW -> HWC
+        output = outputs[0][0]  # Remove batch dimension (already in HWC format)
         output = np.clip(output * 255.0, 0, 255).astype(np.uint8)
         
         # Convert back to image
         upscaled = Image.fromarray(output)
         
-        print(f"✓ Upscaled: {img.size} -> {upscaled.size}")
+        print(f"[OK] Upscaled: {img.size} -> {upscaled.size}")
         print(f"  Inference time: {inference_time*1000:.2f}ms")
         
         if output_path:
@@ -64,21 +62,22 @@ class AMDUpscaler:
     
     def upscale_array(self, img_array):
         """Upscale a numpy array (for real-time processing)"""
-        # Ensure float32 and normalized
-        if img_array.dtype != np.float32:
-            img_array = img_array.astype(np.float32) / 255.0
+        # Ensure float16 and normalized
+        if img_array.dtype != np.float16:
+            if img_array.max() > 1.0:  # Not normalized yet
+                img_array = img_array.astype(np.float16) / 255.0
+            else:
+                img_array = img_array.astype(np.float16)
         
-        # Convert to NCHW if needed
+        # Model expects NHWC: Convert to batch format if needed
         if len(img_array.shape) == 3:  # HWC
-            img_array = np.transpose(img_array, (2, 0, 1))
-            img_array = np.expand_dims(img_array, axis=0)
+            img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
         
         # Run inference
         outputs = self.session.run([self.output_name], {self.input_name: img_array})
         
-        # Post-process
-        output = outputs[0][0]
-        output = np.transpose(output, (1, 2, 0))
+        # Post-process (output is already in HWC format)
+        output = outputs[0][0]  # Remove batch dimension
         output = np.clip(output * 255.0, 0, 255).astype(np.uint8)
         
         return output
@@ -106,4 +105,5 @@ if __name__ == "__main__":
     # Upscale image
     upscaler.upscale_image(input_path, output_path)
     
-    print("\n✓ Done!")
+    print("\n[OK] Done!")
+
