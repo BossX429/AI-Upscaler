@@ -1,4 +1,4 @@
-"""
+﻿"""
 AI Upscaler Daemon - Always Running Background Service
 Auto-detects games and applies upscaling
 Toggle with Ctrl+Alt+U hotkey
@@ -49,10 +49,10 @@ class UpscalerDaemon:
         self.save_config()
         
         if self.enabled:
-            print("\n✓ UPSCALING ENABLED")
+            print("\n[OK] UPSCALING ENABLED")
             self.start_upscaling()
         else:
-            print("\n✗ UPSCALING DISABLED")
+            print("\n[X] UPSCALING DISABLED")
             self.stop_upscaling()
     
     def start_upscaling(self):
@@ -159,3 +159,4 @@ class UpscalerDaemon:
 if __name__ == "__main__":
     daemon = UpscalerDaemon()
     daemon.run()
+

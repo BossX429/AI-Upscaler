@@ -1,4 +1,4 @@
-"""
+﻿"""
 Real-Time Game Upscaling
 Captures game frames and applies AI upscaling on-the-fly
 """
@@ -72,9 +72,10 @@ class GameUpscaler:
             print("\nStopping...")
         finally:
             cv2.destroyAllWindows()
-            print(f"\n✓ Average FPS: {avg_fps:.1f}")
+            print(f"\n[OK] Average FPS: {avg_fps:.1f}")
 
 
 if __name__ == "__main__":
     upscaler = GameUpscaler(monitor=1)
     upscaler.run(display_output=True, fps_target=60)
+
